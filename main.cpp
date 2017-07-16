@@ -16,8 +16,9 @@
 TODO
 #####################################
 
-- Specify output bin folder
 - Add support to switch between console and window subsystem
+- Default libraries
+- Specify output bin folder
 - Include directories
 - Unity build
 - More robust copying of files - in case of multiple files with the same name for hashing, add index?

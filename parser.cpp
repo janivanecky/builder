@@ -429,6 +429,8 @@ BuildSettings parse_config_file(File config_file)
                 parse_libraries_command(&lexer, &build_settings);
             else if (token_string_equal(current_token, KEYWORD_PREHASH))
                 parse_pre_hash_command(&lexer, &build_settings);
+            else
+                printf("Uncrecognized identifier '%.*s'.\n", current_token.data_size, current_token.data);
         }
         else if (current_token.type == TOKEN_EOF)
         {
