@@ -47,7 +47,7 @@ namespace config
     // OPTIMIZATION - /EHsc /fp:fast
     // MISC - MTd (static) Zc:inline?
     char *compiler_path            = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.10.25017\\" CONFIG_BIN_DIR_VAR "\\HostX86\\x64\\cl.exe";
-    char *compiler_options_debug   = "/nologo /W3 /Od /RTC1 /MDd /EHsc /Zc:inline /Gm- /MP /Fo:" CONFIG_BIN_DIR_VAR "\\obj\\ /Fd:" CONFIG_BIN_DIR_VAR "\\debug_compile.pdb /Zi /link /INCREMENTAL:NO /PDB:" CONFIG_BIN_DIR_VAR "\\debug.pdb /subsystem:windows /MACHINE:X64 /debug:fastlink /CGTHREADS:4";
-    char *compiler_options_release = "/nologo /W3 /O2 /MD /EHsc /Zc:inline /Gm- /MP /Fo:" CONFIG_BIN_DIR_VAR "\\obj\\ /link /INCREMENTAL:NO /subsystem:windows /MACHINE:X64 /debug:none /CGTHREADS:4";
+    char *compiler_options_debug   = "/nologo /W3 /Od /RTC1 /MDd /EHsc /Zc:inline /Gm- /MP /Fo:" CONFIG_BIN_DIR_VAR "\\obj\\ /Fd" CONFIG_BIN_DIR_VAR "\\ /Zi /link /INCREMENTAL:NO /subsystem:console /MACHINE:X64 /debug:fastlink /CGTHREADS:4";
+    char *compiler_options_release = "/nologo /W3 /O2 /MD /EHsc /Zc:inline /Gm- /MP /Fo:" CONFIG_BIN_DIR_VAR "\\obj\\ /link /INCREMENTAL:NO /subsystem:console /MACHINE:X64 /debug:none /CGTHREADS:4";
     char *exe_file_prefix          = " /OUT:" CONFIG_BIN_DIR_VAR "\\";
 }

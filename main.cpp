@@ -251,11 +251,18 @@ int main(int argc, char **argv)
         }   
 
         WaitForSingleObject(process_info.hProcess, 5000);
+        DWORD exit_code;
+        GetExitCodeProcess(process_info.hProcess, &exit_code);
+        if(exit_code)
+        {
+            printf("Compilation failed! (%fs)\n", timer::end(&perf_timer));
+        }
+        else
+        {
+            printf("Compilation done! (%fs)\n", timer::end(&perf_timer));
+            printf("> %s\n", build_settings.target_exe_name);
+        }
     }
 
-    file_system::delete_file(CONFIG_BIN_DIR_VAR "\\debug_compile.pdb");
-
-    printf("Compilation done! (%fs)\n", timer::end(&perf_timer));
-    printf("> %s\n", build_settings.target_exe_name);
     return 0;
 }
