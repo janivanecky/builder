@@ -128,7 +128,20 @@ namespace file_system
 
     FileList *find_files(char *file_pattern)
     {
-        // Find the last backlash to find the directory path
+        // Strip slashes from the end, if any - this is cause of the way FindFirstFile functions
+        int32_t file_pattern_length = (int32_t)string::length(file_pattern);
+        for(int32_t i = file_pattern_length - 1; i > 0; ++i)
+        {
+            if(file_pattern[i] == '/' || file_pattern[i] == '\\')
+            {
+                file_pattern[i] = 0;
+            }
+            else
+            {
+                break;
+            }
+        }
+        
         auto pre_dir_mem_state = memory::set(TEMPORARY);
         char *dir_path = file_system::get_directory_from_path(file_pattern, TEMPORARY);
 

@@ -1,0 +1,23 @@
+====================
+DOING
+====================
+
+====================
+TODO
+====================
+- VS2019
+- Auto VS path detection
+- ReleaseDebug
+- Add support to switch between console and window subsystem
+- Default libraries
+- Specify output bin folder
+- Include directories
+- Unity build
+- More robust copying of files - in case of multiple files with the same name for hashing, add index?
+                               - for copys specify target path in sample.build?
+- Rename PDB?
+- In case of forgeting closing " during hashing, program crashes
+
+====================
+DONE
+====================

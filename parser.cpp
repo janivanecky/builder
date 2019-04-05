@@ -1,7 +1,8 @@
 char *KEYWORD_BUILD     = "build_exe";
-char *KEYWORD_COPY = "copy";
+char *KEYWORD_COPY      = "copy";
 char *KEYWORD_PREHASH   = "pre_hash";
 char *KEYWORD_LIBRARIES = "libs";
+char *KEYWORD_INCLUDE   = "include_dirs";
 
 enum TokenTypes
 {
@@ -96,13 +97,14 @@ Token get_next_token(Lexer *lexer)
             Token result = { TOKEN_COMMA, 0, 0 };
             return result;
         }
-        else if (is_alpha(current_char) || current_char == '/')
+        else if (is_alpha(current_char) || current_char == '/' ||current_char == '.')
         {
             Token result = { TOKEN_IDENTIFIER, lexer->current_ptr - 1, 1 };
             current_char = *lexer->current_ptr;
             while(is_alpha(current_char) || is_num(current_char) ||
-                  current_char == '.' || current_char == '_' ||
-                  current_char == '/' || current_char == '*')
+                  current_char == '.' || current_char == '_' || 
+                  current_char == '/' || current_char == '*' ||
+                  current_char == '-')
             {
                 current_char = *(++lexer->current_ptr);
                 result.data_size++;
@@ -407,6 +409,44 @@ bool parse_libraries_command(Lexer *lexer, BuildSettings *build_settings)
     return true;
 }
 
+bool parse_include_command(Lexer *lexer, BuildSettings *build_settings)
+{
+    Token next_token = get_next_token(lexer);
+    if(next_token.type != TOKEN_LEFT_PAREN)
+    {
+        printf("Expected left paren after 'include_dir' command. Line %d.\n", lexer->current_line_number);
+        return false;
+    }
+    
+    next_token = get_next_token(lexer);
+    auto mem_state_persistent = memory::set(PERSISTENT);
+    
+    FileList *file_list = parse_file_list(next_token, lexer, &next_token);
+    if (!file_list)
+    {
+        printf("Expected at least one directory in 'include_dir' command. Line %d.\n", lexer->current_line_number);
+        memory::reset(mem_state_persistent, PERSISTENT);
+        return false;
+    }
+
+    if (next_token.type != TOKEN_RIGHT_PAREN)
+    {
+        printf("Expected right paren at the end of 'include_dir' command. Line %d.\n", lexer->current_line_number);
+        memory::reset(mem_state_persistent, PERSISTENT);
+        return false;
+    }
+    
+    if (!build_settings->include_directories)
+    {
+        build_settings->include_directories = file_list;
+    }
+    else
+    {
+        build_settings->include_directories->next_file = file_list;
+    }
+    return true;
+}
+
 BuildSettings parse_config_file(File config_file)
 {
     BuildSettings build_settings = {};
@@ -429,6 +469,8 @@ BuildSettings parse_config_file(File config_file)
                 parse_libraries_command(&lexer, &build_settings);
             else if (token_string_equal(current_token, KEYWORD_PREHASH))
                 parse_pre_hash_command(&lexer, &build_settings);
+            else if (token_string_equal(current_token, KEYWORD_INCLUDE))
+                parse_include_command(&lexer, &build_settings);
             else
                 printf("Uncrecognized identifier '%.*s'.\n", current_token.data_size, current_token.data);
         }

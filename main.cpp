@@ -11,21 +11,6 @@
 #include "hasher.cpp"
 #include "environment.cpp"
 
-/*
-#####################################
-TODO
-#####################################
-
-- Add support to switch between console and window subsystem
-- Default libraries
-- Specify output bin folder
-- Include directories
-- Unity build
-- More robust copying of files - in case of multiple files with the same name for hashing, add index?
-                               - for copys specify target path in sample.build?
-- Rename PDB?
-
-*/
 
 int main(int argc, char **argv)
 {
@@ -168,27 +153,38 @@ int main(int argc, char **argv)
             source_files = source_files->next_file;
         }
 
+        FileList *include_dirs = build_settings.include_directories;
+        // TODO: Check if the +1 is necesssary because of spaces being added for each path
+        uint32_t include_dirs_path_length = 1; 
+        while(include_dirs)
+        {
+            include_dirs_path_length += string::length(include_dirs->file_path) + 1 + 3; // Add a space before + '/I '
+            include_dirs = include_dirs->next_file;
+        }
+
         FileList *libraries = build_settings.libraries;
-        uint32_t libraries_length = 1; // Add a space after compiler path
+        // TODO: Check if the +1 is necesssary because of spaces being added for each path
+        uint32_t libraries_length = 1; // Add a space before
         while(libraries)
         {
             libraries_length += string::length(libraries->file_path) + 1;
             libraries = libraries->next_file;
         }
 
+        char *compiler_path    = config::compiler_path_vs2017;
         char *compiler_options = arg_debug ? config::compiler_options_debug : config::compiler_options_release;
 
-        uint32_t compiler_path_length    = string::length(config::compiler_path);
+        uint32_t compiler_path_length    = string::length(compiler_path);
         uint32_t compiler_options_length = string::length(compiler_options);
         uint32_t exe_file_name_length    = string::length(build_settings.target_exe_name) + 1; // ntc
         uint32_t exe_file_prefix_length  = string::length(config::exe_file_prefix);
-        uint32_t command_line_length     = compiler_path_length + source_files_paths_length + compiler_options_length +
-                                           exe_file_prefix_length + exe_file_name_length + libraries_length;
+        uint32_t command_line_length     = compiler_path_length + source_files_paths_length + include_dirs_path_length +        
+                                           compiler_options_length + exe_file_prefix_length + exe_file_name_length + libraries_length;
                                            
         compile_cmd = memory::allocate<char>(command_line_length, PERSISTENT);
         char *compile_cmd_ptr = compile_cmd;
         
-        memcpy(compile_cmd_ptr, config::compiler_path, compiler_path_length);
+        memcpy(compile_cmd_ptr, compiler_path, compiler_path_length);
         compile_cmd_ptr += compiler_path_length;
         *(compile_cmd_ptr++) = ' ';
 
@@ -201,9 +197,25 @@ int main(int argc, char **argv)
             *(compile_cmd_ptr++) = ' ';
             source_files = source_files->next_file;
         }
+
+        include_dirs = build_settings.include_directories;
+        
+        while(include_dirs)
+        {
+            memcpy(compile_cmd_ptr, "/I ", 3);
+            compile_cmd_ptr += 3;
+
+            uint32_t include_dir_length = string::length(include_dirs->file_path);
+            memcpy(compile_cmd_ptr, include_dirs->file_path, include_dir_length);
+            compile_cmd_ptr += include_dir_length;
+            *(compile_cmd_ptr++) = ' ';
+            include_dirs = include_dirs->next_file;
+        }
+
         memcpy(compile_cmd_ptr, compiler_options, compiler_options_length);
         compile_cmd_ptr += compiler_options_length;
         *(compile_cmd_ptr++) = ' ';
+        
         
         libraries = build_settings.libraries;
         while(libraries)
@@ -225,19 +237,26 @@ int main(int argc, char **argv)
     // Get updated environment settings
     char *new_env_block = NULL;
     {
+        char **env_var_new_info                = config::env_var_new_info_vs2017;
+        uint32_t env_var_new_info_count        = config::env_var_new_info_count_vs2017;
+        char **env_var_additional_info         = config::env_var_additional_info_vs2017;
+        char **env_var_additional_names        = config::env_var_additional_names_vs2017;
+        uint32_t env_var_additional_info_count = config::env_var_additional_info_count_vs2017;
+
         char *old_env_block = environment::get_current_env_block();
-        new_env_block = environment::update_env_block(old_env_block, config::env_var_additional_info, 
-                                                      config::env_var_additional_names, ARRAYSIZE(config::env_var_additional_info), 
-                                                      config::env_var_new_info, ARRAYSIZE(config::env_var_new_info), PERSISTENT);
+        new_env_block = environment::update_env_block(old_env_block, env_var_additional_info, env_var_additional_names,     
+                                                      env_var_additional_info_count, env_var_new_info, env_var_new_info_count,
+                                                      PERSISTENT);
         environment::free_env_block(old_env_block);
     }
-
+    
     // Create compilation process
     printf("Source files:\n");
     {
         PROCESS_INFORMATION process_info = {};
         STARTUPINFO         startup_info = {};
         startup_info.cb = sizeof(startup_info);
+        printf("%s\n", compile_cmd);
 
         BOOL return_status = CreateProcessA(NULL, compile_cmd, NULL, NULL, TRUE, NULL, new_env_block, NULL, &startup_info, &process_info);
         if (!return_status)
