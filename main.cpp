@@ -20,6 +20,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    config::setup_paths();
+
     // Default settings
     bool arg_clean = false;
     bool arg_debug = true;
@@ -171,7 +173,7 @@ int main(int argc, char **argv)
             libraries = libraries->next_file;
         }
 
-        char *compiler_path    = config::compiler_path_vs2017;
+        char *compiler_path    = config::compiler_path;
         char *compiler_options = arg_debug ? config::compiler_options_debug : config::compiler_options_release;
 
         uint32_t compiler_path_length    = string::length(compiler_path);
@@ -237,15 +239,11 @@ int main(int argc, char **argv)
     // Get updated environment settings
     char *new_env_block = NULL;
     {
-        char **env_var_new_info                = config::env_var_new_info_vs2017;
-        uint32_t env_var_new_info_count        = config::env_var_new_info_count_vs2017;
-        char **env_var_additional_info         = config::env_var_additional_info_vs2017;
-        char **env_var_additional_names        = config::env_var_additional_names_vs2017;
-        uint32_t env_var_additional_info_count = config::env_var_additional_info_count_vs2017;
+        char **env_var_new_info                = config::env_var_new_info;
+        uint32_t env_var_new_info_count        = config::env_var_new_info_count;
 
         char *old_env_block = environment::get_current_env_block();
-        new_env_block = environment::update_env_block(old_env_block, env_var_additional_info, env_var_additional_names,     
-                                                      env_var_additional_info_count, env_var_new_info, env_var_new_info_count,
+        new_env_block = environment::update_env_block(old_env_block, env_var_new_info, env_var_new_info_count,
                                                       PERSISTENT);
         environment::free_env_block(old_env_block);
     }

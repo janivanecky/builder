@@ -53,16 +53,14 @@ uint32_t get_var_name_length(char *var)
 
 namespace environment
 {
-    char *update_env_block(char *old_env_block, char **env_additional_info, 
-                           char **env_additional_names, uint32_t env_additional_info_count, 
+    char *update_env_block(char *old_env_block,
                            char **env_new_info, uint32_t env_new_info_count,
                            AllocatorType allocator_type = PERSISTENT)
     {
         // Compute new env block length
         uint32_t   old_env_block_length = get_env_block_length(old_env_block);
-        uint32_t additional_info_length = get_env_additional_info_length(env_additional_info, env_additional_info_count);
         uint32_t        new_info_length = get_env_new_info_length(env_new_info, env_new_info_count);
-        uint32_t   new_env_block_length = old_env_block_length + additional_info_length + new_info_length;
+        uint32_t   new_env_block_length = old_env_block_length + new_info_length;
 
         // Allocate and prepare pointers
         char *    new_env_block = memory::allocate<char>(new_env_block_length, PERSISTENT);
@@ -78,18 +76,6 @@ namespace environment
 
             // Copy over old content
             memcpy(new_env_block_ptr, old_env_block_ptr, old_var_length);
-
-            // Find the matching additional info
-            for (uint32_t i = 0; i < env_additional_info_count && var_name_length > 0; ++i)
-            {
-                if(string::equals(old_env_block_ptr, env_additional_names[i], var_name_length))// && env_var_additional_names[i][var_name_length] == '=')
-                {
-                    // Copy over additional info
-                    uint32_t additional_info_length = string::length(env_additional_info[i]);
-                    memcpy(new_env_block_ptr + old_var_length, env_additional_info[i], additional_info_length);
-                    new_var_length += additional_info_length;
-                }
-            }
 
             // Add ntc to the end of the var
             new_env_block_ptr[new_var_length] = 0;
