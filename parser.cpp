@@ -442,7 +442,11 @@ bool parse_include_command(Lexer *lexer, BuildSettings *build_settings)
     }
     else
     {
-        build_settings->include_directories->next_file = file_list;
+        FileList *current_include_directory = build_settings->include_directories;
+        while(current_include_directory->next_file != NULL) {
+            current_include_directory = current_include_directory->next_file;
+        }
+        current_include_directory->next_file = file_list;
     }
     return true;
 }
