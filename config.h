@@ -9,6 +9,7 @@ namespace config
     char *args_debug   = "--debug";
     char *args_release = "--release";
     char *args_clean   = "--clean";
+    char *args_run     = "run";
 
     #define CONFIG_BIN_DIR_VAR "bin"
 

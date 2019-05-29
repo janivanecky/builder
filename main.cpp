@@ -14,10 +14,20 @@
 
 int main(int argc, char **argv)
 {
-    if (argc < 2)
-    {
+    // Check if no. arguments correct
+    if (argc < 2) {
         printf("You need to provide a path to a build file.\n");
         return -1;
+    }
+
+    // Check if `run` subcommand specified
+    bool is_run = false;
+    if(string::equals(argv[1], config::args_run)) {
+        is_run = true;
+        if (argc < 3) {
+            printf("You need to provide a path to a build file.\n");
+            return -1;
+        }
     }
 
     config::setup_paths();
@@ -27,7 +37,8 @@ int main(int argc, char **argv)
     bool arg_debug = true;
 
     // Parse args
-    for (uint32_t i = 2; i < (uint32_t) argc; ++i)
+    uint32_t optional_args_start_index = is_run ? 3 : 2;
+    for (uint32_t i = optional_args_start_index; i < (uint32_t) argc; ++i)
     {
         char *option = argv[i];
         if (string::equals(option, config::args_debug))
@@ -52,7 +63,7 @@ int main(int argc, char **argv)
     timer::start(&perf_timer);
     memory::init();
 
-    char *path_to_config_file   = argv[1];
+    char *path_to_config_file   = is_run ? argv[2] : argv[1];
     auto  mem_state_config_file = memory::set(TEMPORARY);
 
     // Open config file
@@ -279,6 +290,62 @@ int main(int argc, char **argv)
             printf("Compilation done! (%fs)\n", timer::end(&perf_timer));
             printf("> %s\n", build_settings.target_exe_name);
         }
+    }
+
+    if (is_run) {
+        char *config_directory_path = file_system::get_directory_from_path(path_to_config_file, TEMPORARY);
+
+        // +2 for backslashes before and after bin directory
+        // +1 for ntc
+        uint32_t config_directory_path_length  = string::length(config_directory_path);
+        uint32_t bin_dir_length                = string::length(CONFIG_BIN_DIR_VAR);
+        uint32_t exe_file_length               = string::length(build_settings.target_exe_name);
+        uint32_t working_directory_path_length = config_directory_path_length + bin_dir_length + 3;
+        uint32_t run_cmd_length                = config_directory_path_length + bin_dir_length + exe_file_length + 3;
+
+        // Compose working directory path
+        char *working_directory_path = memory::allocate<char>(working_directory_path_length, PERSISTENT);
+        char *working_directory_path_ptr = working_directory_path;
+        
+        memcpy(working_directory_path_ptr, config_directory_path, config_directory_path_length);
+        working_directory_path_ptr += config_directory_path_length;
+
+        memcpy(working_directory_path_ptr, "\\" CONFIG_BIN_DIR_VAR "\\", bin_dir_length + 2);
+        working_directory_path_ptr += bin_dir_length + 2;
+        *working_directory_path_ptr = 0;
+
+        // Compose run command
+        char *run_cmd = memory::allocate<char>(run_cmd_length, PERSISTENT);
+        char *run_cmd_ptr = run_cmd;
+        
+        memcpy(run_cmd_ptr, config_directory_path, config_directory_path_length);
+        run_cmd_ptr += config_directory_path_length;
+
+        memcpy(run_cmd_ptr, "\\" CONFIG_BIN_DIR_VAR "\\", bin_dir_length + 2);
+        run_cmd_ptr += bin_dir_length + 2;
+
+        memcpy(run_cmd_ptr, build_settings.target_exe_name, exe_file_length);
+        run_cmd_ptr += exe_file_length;
+        *run_cmd_ptr = 0;
+
+        // Run
+        PROCESS_INFORMATION process_info = {};
+        STARTUPINFO         startup_info = {};
+        startup_info.cb = sizeof(startup_info);
+        BOOL return_status = CreateProcessA(NULL, run_cmd, NULL, NULL, TRUE, NULL, new_env_block, working_directory_path, &startup_info, &process_info);
+        if (!return_status)
+        {
+            char *messageBuffer;
+            DWORD  error = GetLastError();
+            size_t size  = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                        NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+            printf("Running %s failed! %s\n", build_settings.target_exe_name, messageBuffer);
+            return -1;
+        }   
+
+        WaitForSingleObject(process_info.hProcess, 5000);
+        DWORD exit_code;
+        GetExitCodeProcess(process_info.hProcess, &exit_code);
     }
 
     return 0;
