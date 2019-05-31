@@ -284,6 +284,7 @@ int main(int argc, char **argv)
         if(exit_code)
         {
             printf("Compilation failed! (%fs)\n", timer::end(&perf_timer));
+            return -1;
         }
         else
         {
