@@ -8,6 +8,8 @@ TODO
 - If build fails, sometimes nothing is printed
 - ReleaseDebug
 - Add support to switch between console and window subsystem
+- relative path glob should work in workspace dir (*.hlsl instead of ../project/*.hlsl)
+- if run fails, nothing is shown (no exception)
 - Default libraries
 - Specify output bin folder
 - Unity build
@@ -19,5 +21,8 @@ TODO
 ====================
 DONE
 ====================
+04/02/19
+- fix not being able to specify build files withou `./` prefix fo `run` command to work
+
 28/05/19
 - build run command

@@ -29,9 +29,11 @@ namespace file_system
         char *directory_path = NULL;
         char *file_start     = file_system::get_file_name_from_path(path);
         uint32_t directory_path_length = (uint32_t) (file_start - path);
-        if(directory_path_length)
-        {
+        if(directory_path_length){
             directory_path = string::create_null_terminated(path, directory_path_length, allocator_type);
+        } else {
+            // In case directory_path_length == 0, only file name was provided, so we return the current directory.
+            directory_path = "./";
         }
         return directory_path;
     }
