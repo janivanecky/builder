@@ -5,22 +5,25 @@ DOING
 ====================
 TODO
 ====================
-- If build fails, sometimes nothing is printed
+- In case of forgeting closing " during hashing, program crashes
+    - need to replicate
+
 - ReleaseDebug
 - Add support to switch between console and window subsystem
-- relative path glob should work in workspace dir (*.hlsl instead of ../project/*.hlsl)
-- if run fails, nothing is shown (no exception)
 - Default libraries
 - Specify output bin folder
 - Unity build
 - More robust copying of files - in case of multiple files with the same name for hashing, add index?
                                - for copys specify target path in sample.build?
 - Rename PDB?
-- In case of forgeting closing " during hashing, program crashes
 
 ====================
 DONE
 ====================
+09/05/20
+- fix not handling filter pattern matching 0 files
+- fix paths starting with '*'
+
 04/02/19
 - fix not being able to specify build files withou `./` prefix fo `run` command to work
 

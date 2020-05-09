@@ -97,7 +97,7 @@ Token get_next_token(Lexer *lexer)
             Token result = { TOKEN_COMMA, 0, 0 };
             return result;
         }
-        else if (is_alpha(current_char) || current_char == '/' ||current_char == '.')
+        else if (is_alpha(current_char) || current_char == '/' || current_char == '.' || current_char == '*')
         {
             Token result = { TOKEN_IDENTIFIER, lexer->current_ptr - 1, 1 };
             current_char = *lexer->current_ptr;
@@ -139,8 +139,17 @@ FileList *parse_file_list(Token initial_token, Lexer *lexer, Token *last_token)
         // Cache previous file node
         if(current_file) previous_file = current_file;
 
+        // Find files matching pattern.
         auto mem_state = memory::set(TEMPORARY);
-        current_file = file_system::find_files(make_string_from_token(next_token, TEMPORARY));
+        char *token_string = make_string_from_token(next_token, TEMPORARY);
+        current_file = file_system::find_files(token_string);
+
+        // If no file matches, we're exiting.
+        if(!current_file) {
+            printf("No files match pattern '%s', line %d.\n", token_string, lexer->current_line_number);
+            memory::reset(mem_state, TEMPORARY);
+            return NULL;
+        }
         memory::reset(mem_state, TEMPORARY);
 
         // If there's a previous file node (so every iteration except for the first one),
