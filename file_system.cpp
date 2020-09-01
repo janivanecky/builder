@@ -9,7 +9,7 @@ namespace file_system
     char *get_absolute_path(char *relative_path, AllocatorType allocator_type = PERSISTENT)
     {
         uint32_t needed_buffer_size = GetFullPathNameA(relative_path, 0, NULL, NULL);
-        char *path_buffer = memory::allocate<char>(needed_buffer_size, allocator_type);   
+        char *path_buffer = memory::allocate<char>(needed_buffer_size, allocator_type);
         uint32_t path_length = GetFullPathNameA(relative_path, needed_buffer_size, path_buffer, NULL);
         return path_buffer;
     }
@@ -31,6 +31,11 @@ namespace file_system
         uint32_t directory_path_length = (uint32_t) (file_start - path);
         if(directory_path_length){
             directory_path = string::create_null_terminated(path, directory_path_length, allocator_type);
+        } else if(string::equals(path, "..")) {
+            // In case directory_path_length == 0 and the path is '..' we return ../../.
+            // This means we return the directory of the "file/directory" that the path points to,
+            // which is a parent directory of '../'
+            directory_path = "../../";
         } else {
             // In case directory_path_length == 0, only file name was provided, so we return the current directory.
             directory_path = "./";
@@ -44,7 +49,7 @@ namespace file_system
         PathCombineA(combined_path, path_first, path_second);
         return combined_path;
     }
-    
+
     File read_file(char *path, AllocatorType allocator_type = PERSISTENT)
     {
         File file = {};
@@ -101,7 +106,7 @@ namespace file_system
         {
             printf("Error writing to file %s!\n", path);
         }
-        
+
         CloseHandle(file_handle);
         return bytes_written;
     }
@@ -110,7 +115,7 @@ namespace file_system
     {
         CreateDirectoryA(dir_path, NULL);
     }
-    
+
     void copy_file(char *source_path, char *target_path)
     {
         // Iteratively try to create all the directories in the path
@@ -143,7 +148,7 @@ namespace file_system
                 break;
             }
         }
-        
+
         auto pre_dir_mem_state = memory::set(TEMPORARY);
         char *dir_path = file_system::get_directory_from_path(file_pattern, TEMPORARY);
 
@@ -183,7 +188,7 @@ namespace file_system
 
             if (current_file) current_file->next_file = NULL;
         }
-        
+
         FindClose(bin_file);
         memory::reset(pre_dir_mem_state, TEMPORARY);
         return file_list;
@@ -212,7 +217,7 @@ namespace file_system
             char *dir_content_pattern = file_system::get_combined_paths(file_path, "*", PERSISTENT);
             FileList *dir_contents = file_system::find_files(dir_content_pattern);
 
-            while(dir_contents) 
+            while(dir_contents)
             {
                 file_system::delete_file_recursive(dir_contents->file_path);
                 dir_contents = dir_contents->next_file;
