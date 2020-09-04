@@ -53,12 +53,12 @@ int main(int argc, char **argv)
         {
             arg_clean = true;
         }
-        else 
+        else
         {
             printf("Unrecognized argument %s.", option);
         }
     }
-    
+
     Timer perf_timer = timer::get();
     timer::start(&perf_timer);
     memory::init();
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 
                 file_system::copy_file(copy_files->file_path, target_copy_file_path);
                 memory::reset(mem_state, TEMPORARY);
-                
+
                 copy_files = copy_files->next_file;
             }
 
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
 
         FileList *include_dirs = build_settings.include_directories;
         // TODO: Check if the +1 is necesssary because of spaces being added for each path
-        uint32_t include_dirs_path_length = 1; 
+        uint32_t include_dirs_path_length = 1;
         while(include_dirs)
         {
             include_dirs_path_length += string::length(include_dirs->file_path) + 1 + 3; // Add a space before + '/I '
@@ -191,12 +191,12 @@ int main(int argc, char **argv)
         uint32_t compiler_options_length = string::length(compiler_options);
         uint32_t exe_file_name_length    = string::length(build_settings.target_exe_name) + 1; // ntc
         uint32_t exe_file_prefix_length  = string::length(config::exe_file_prefix);
-        uint32_t command_line_length     = compiler_path_length + source_files_paths_length + include_dirs_path_length +        
+        uint32_t command_line_length     = compiler_path_length + source_files_paths_length + include_dirs_path_length +
                                            compiler_options_length + exe_file_prefix_length + exe_file_name_length + libraries_length;
-                                           
+
         compile_cmd = memory::allocate<char>(command_line_length, PERSISTENT);
         char *compile_cmd_ptr = compile_cmd;
-        
+
         memcpy(compile_cmd_ptr, compiler_path, compiler_path_length);
         compile_cmd_ptr += compiler_path_length;
         *(compile_cmd_ptr++) = ' ';
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
         }
 
         include_dirs = build_settings.include_directories;
-        
+
         while(include_dirs)
         {
             memcpy(compile_cmd_ptr, "/I ", 3);
@@ -228,8 +228,8 @@ int main(int argc, char **argv)
         memcpy(compile_cmd_ptr, compiler_options, compiler_options_length);
         compile_cmd_ptr += compiler_options_length;
         *(compile_cmd_ptr++) = ' ';
-        
-        
+
+
         libraries = build_settings.libraries;
         while(libraries)
         {
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
         compile_cmd_ptr += exe_file_name_length;
         *(compile_cmd_ptr - 1) = 0;
     }
-    
+
     // Get updated environment settings
     char *new_env_block = NULL;
     {
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
                                                       PERSISTENT);
         environment::free_env_block(old_env_block);
     }
-    
+
     // Create compilation process
     printf("Source files:\n");
     {
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
                                         NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
             printf("Call to compiler failed! %s\n", messageBuffer);
             return -1;
-        }   
+        }
 
         WaitForSingleObject(process_info.hProcess, 5000);
         DWORD exit_code;
@@ -294,36 +294,27 @@ int main(int argc, char **argv)
     }
 
     if (is_run) {
-        char *config_directory_path = file_system::get_directory_from_path(path_to_config_file, TEMPORARY);
-
         // +2 for backslashes before and after bin directory
         // +1 for ntc
-        uint32_t config_directory_path_length  = string::length(config_directory_path);
         uint32_t bin_dir_length                = string::length(CONFIG_BIN_DIR_VAR);
         uint32_t exe_file_length               = string::length(build_settings.target_exe_name);
-        uint32_t working_directory_path_length = config_directory_path_length + bin_dir_length + 3;
-        uint32_t run_cmd_length                = config_directory_path_length + bin_dir_length + exe_file_length + 3;
+        uint32_t working_directory_path_length = bin_dir_length + 2;
+        uint32_t run_cmd_length                = bin_dir_length + exe_file_length + 2;
 
         // Compose working directory path
         char *working_directory_path = memory::allocate<char>(working_directory_path_length, PERSISTENT);
         char *working_directory_path_ptr = working_directory_path;
-        
-        memcpy(working_directory_path_ptr, config_directory_path, config_directory_path_length);
-        working_directory_path_ptr += config_directory_path_length;
 
-        memcpy(working_directory_path_ptr, "\\" CONFIG_BIN_DIR_VAR "\\", bin_dir_length + 2);
-        working_directory_path_ptr += bin_dir_length + 2;
+        memcpy(working_directory_path_ptr, CONFIG_BIN_DIR_VAR "\\", bin_dir_length + 1);
+        working_directory_path_ptr += bin_dir_length + 1;
         *working_directory_path_ptr = 0;
 
         // Compose run command
         char *run_cmd = memory::allocate<char>(run_cmd_length, PERSISTENT);
         char *run_cmd_ptr = run_cmd;
-        
-        memcpy(run_cmd_ptr, config_directory_path, config_directory_path_length);
-        run_cmd_ptr += config_directory_path_length;
 
-        memcpy(run_cmd_ptr, "\\" CONFIG_BIN_DIR_VAR "\\", bin_dir_length + 2);
-        run_cmd_ptr += bin_dir_length + 2;
+        memcpy(run_cmd_ptr, CONFIG_BIN_DIR_VAR "\\", bin_dir_length + 1);
+        run_cmd_ptr += bin_dir_length + 1;
 
         memcpy(run_cmd_ptr, build_settings.target_exe_name, exe_file_length);
         run_cmd_ptr += exe_file_length;
@@ -342,7 +333,7 @@ int main(int argc, char **argv)
                                         NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
             printf("Running %s failed! %s\n", build_settings.target_exe_name, messageBuffer);
             return -1;
-        }   
+        }
 
         WaitForSingleObject(process_info.hProcess, 5000);
         DWORD exit_code;
