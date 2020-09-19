@@ -1,2 +1,2 @@
 echo off
-setx "path=%PATH%;%cd%\bin"
+setx PATH "%PATH%;%cd%\bin"
